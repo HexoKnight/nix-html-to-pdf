@@ -1,0 +1,11 @@
+{
+  "name": "gen-pdf",
+  "type": "module",
+  "version": "1.0.0",
+  "bin": {
+    "gen-pdf": "./gen-pdf.js"
+  },
+  "dependencies": {
+    "puppeteer-core": "^23.5.3"
+  }
+}
