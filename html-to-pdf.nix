@@ -8,7 +8,10 @@
   linkFarm,
   substitute,
 
-  chromium,
+  fetchzip,
+  autoPatchelfHook,
+  pkgs,
+
   firefox,
 
   libfaketime,
@@ -41,13 +44,45 @@ htmlFile: {
 }:
 
 let
+  chrome-for-testing = stdenvNoCC.mkDerivation rec {
+    pname = "chrome-for-testing";
+    version = "130.0.6723.58";
+
+    src = fetchzip {
+      url = "https://storage.googleapis.com/chrome-for-testing-public/${version}/linux64/chrome-linux64.zip";
+      hash = "sha256-YqK7MCaWc0PTbyYRtM7bDrNyicZMpie3RJUgkYLnLNE=";
+    };
+
+    nativeBuildInputs = [
+      autoPatchelfHook
+    ];
+
+    buildInputs = with pkgs; [
+      alsa-lib.out at-spi2-atk.out cairo.out cups.lib dbus.lib expat.out glib.out libdrm.out libxkbcommon.out mesa.out nspr.out nss.out pango.out systemd.out xorg.libX11.out xorg.libXcomposite.out xorg.libXdamage.out xorg.libXext.out xorg.libXfixes.out xorg.libXrandr.out xorg.libxcb.out
+    ];
+
+    installPhase = ''
+      runHook preInstall
+
+      mkdir -p $out
+      mv -t $out *
+
+      runHook postInstall
+    '';
+
+    env.dontAutoPatchelf = 1;
+    postFixup = ''
+      autoPatchelf -- $out
+    '';
+  };
+
   gen-pdf-args = {
     launchArgs = (
       if useFirefox then {
         executablePath = lib.getExe firefox;
         browser = "firefox";
       } else {
-        executablePath = lib.getExe chromium;
+        executablePath = chrome-for-testing + /chrome;
         browser = "chrome";
       }
     ) // launchArgs;
